@@ -11,8 +11,13 @@ import (
 
 func main() {
 	cmd := &cobra.Command{
-		Use:  "go-mod-merge",
-		RunE: run,
+		Use: "go-mod-merge",
+	}
+
+	flags := flags.AddFlags(cmd)
+
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		return run(cmd, flags)
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -22,9 +27,7 @@ func main() {
 	}
 }
 
-func run(cmd *cobra.Command, args []string) error {
-	flags := flags.AddFlags(cmd)
-
+func run(cmd *cobra.Command, flags flags.Flags) error {
 	slog.InfoContext(
 		cmd.Context(),
 		"running go.mod merge",
