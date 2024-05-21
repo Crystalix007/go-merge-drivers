@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/crystalix007/go-merge-drivers/internal/gomod"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/mod/modfile"
 )
@@ -34,9 +35,8 @@ func TestDiff_currentVsAncestor(t *testing.T) {
 	diff := gomod.Diff(*current, *ancestor)
 
 	// New require statement.
-	slices.ContainsFunc(diff.Require, func(r *modfile.Require) bool {
-		return r.Mod.Path == "github.com/spf13/cobra"
-	})
+	cobraRequires := findRequires(diff, "github.com/spf13/cobra")
+	require.Len(t, cobraRequires, 1)
 }
 
 func TestDiff_currentVsOther(t *testing.T) {
@@ -51,12 +51,12 @@ func TestDiff_currentVsOther(t *testing.T) {
 	diff := gomod.Diff(*current, *other)
 
 	// Changed require statement.
-	slices.ContainsFunc(diff.Require, func(r *modfile.Require) bool {
-		return r.Mod.Path == "github.com/spf13/cobra"
-	})
+	cobraRequires := findRequires(diff, "github.com/spf13/cobra")
+	assert.Len(t, cobraRequires, 1)
 
 	// Removed replace statement.
-	slices.ContainsFunc(diff.Replace, func(r *modfile.Replace) bool {
+	replacesCobra := slices.ContainsFunc(diff.Replace, func(r *modfile.Replace) bool {
 		return r.Old.Path == "github.com/spf13/cobra"
 	})
+	assert.True(t, replacesCobra)
 }

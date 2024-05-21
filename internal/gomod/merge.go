@@ -1,6 +1,9 @@
 package gomod
 
-import "golang.org/x/mod/modfile"
+import (
+	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/semver"
+)
 
 // Merge merges the changes between the current and other go.mod files into the
 // common ancestor go.mod file.
@@ -14,11 +17,23 @@ func Merge(current, other, ancestor modfile.File) modfile.File {
 	return mergeChanges(mergedChanges, ancestor)
 }
 
-// mergeChanges merges the two changesets, preferring the current changes over
-// the other changes.
+// mergeChanges merges the two changesets, preferring higher-versioned values,
+// then the current changes over the other changes.
 func mergeChanges(currentChanges, otherChanges modfile.File) modfile.File {
+	otherReqs := make(map[string]modfile.Require)
+
+	for _, req := range otherChanges.Require {
+		otherReqs[req.Mod.Path] = *req
+	}
+
 	for _, req := range currentChanges.Require {
-		otherChanges.AddRequire(req.Mod.Path, req.Mod.Version)
+		otherReq, ok := otherReqs[req.Mod.Path]
+
+		// If the other require statement doesn't exist, or the current
+		// require is a higher version, then skip.
+		if !ok || semver.Compare(req.Mod.Version, otherReq.Mod.Version) > 0 {
+			otherChanges.AddRequire(req.Mod.Path, req.Mod.Version)
+		}
 	}
 
 	for _, exc := range currentChanges.Exclude {

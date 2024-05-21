@@ -5,7 +5,10 @@ import "golang.org/x/mod/modfile"
 // Diff compares two modfile.File structs and returns the changes between them.
 // It checks for differences in the require, exclude, and replace statements.
 func Diff(version modfile.File, ancestor modfile.File) modfile.File {
-	var changes modfile.File
+	changes := ancestor
+	changes.Exclude = []*modfile.Exclude{}
+	changes.Replace = []*modfile.Replace{}
+	changes.Require = []*modfile.Require{}
 
 	// Avoid quadratic behavior by creating a map of the ancestor require
 	// statements.
@@ -17,7 +20,7 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 
 	// Add the require statements.
 	for _, req := range version.Require {
-		if ancestorReq, ok := ancestorReqs[req.Mod.Path]; ok && *req != ancestorReq {
+		if ancestorReq, ok := ancestorReqs[req.Mod.Path]; !ok || *req != ancestorReq {
 			changes.Require = append(changes.Require, req)
 		}
 	}
@@ -30,7 +33,7 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 
 	// Add the exclude statements.
 	for _, exc := range version.Exclude {
-		if ancestorExc, ok := ancestorExcludes[exc.Mod.Path]; ok && *exc != ancestorExc {
+		if ancestorExc, ok := ancestorExcludes[exc.Mod.Path]; !ok || *exc != ancestorExc {
 			changes.Exclude = append(changes.Exclude, exc)
 		}
 	}
@@ -43,7 +46,7 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 
 	// Add the replace statements.
 	for _, rep := range version.Replace {
-		if ancestorRep, ok := ancestorReps[rep.Old.Path]; ok && *rep != ancestorRep {
+		if ancestorRep, ok := ancestorReps[rep.Old.Path]; !ok || *rep != ancestorRep {
 			changes.Replace = append(changes.Replace, rep)
 		}
 	}
