@@ -7,6 +7,7 @@ type Flags struct {
 	CurrentVersion *string
 	OtherVersion   *string
 	Result         *string
+	Output         *string
 }
 
 func AddFlags(cmd *cobra.Command) Flags {
@@ -17,5 +18,6 @@ func AddFlags(cmd *cobra.Command) Flags {
 		CurrentVersion: flags.StringP("current-version", "A", "", "Current version file"),
 		OtherVersion:   flags.StringP("other-version", "B", "", "Other version file"),
 		Result:         flags.StringP("result", "P", "", "Result file"),
+		Output:         flags.String("output", "/dev/stdout", "Output file"),
 	}
 }

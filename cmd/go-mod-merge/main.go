@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path"
@@ -24,6 +25,9 @@ var (
 
 	// ErrNoOtherVersion is returned when the other version is not provided.
 	ErrNoOtherVersion = errors.New("other version is not provided")
+
+	// ErrNoResult is returned when the result is not provided.
+	ErrNoResult = errors.New("result is not provided")
 )
 
 func main() {
@@ -95,7 +99,24 @@ func run(cmd *cobra.Command, flags flags.Flags) error {
 		)
 	}
 
-	if err := os.WriteFile(*flags.Result, mergedBytes, 0644); err != nil {
+	var resultFile io.WriteCloser
+
+	if *flags.Output == "/dev/stdout" {
+		resultFile = os.Stdout
+	} else {
+		resultFile, err = os.Create(*flags.Output)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to create output file (%s): %w",
+				*flags.Output,
+				err,
+			)
+		}
+	}
+
+	defer resultFile.Close()
+
+	if _, err := resultFile.Write(mergedBytes); err != nil {
 		return fmt.Errorf(
 			"failed to write go.mod file (%s): %w",
 			*flags.Result,
@@ -108,11 +129,6 @@ func run(cmd *cobra.Command, flags flags.Flags) error {
 
 // check will verify the provided flags.
 func check(flags flags.Flags) error {
-	_, filename := path.Split(*flags.Result)
-	if filename != "go.mod" {
-		return ErrNotGoMod
-	}
-
 	if *flags.CommonAncestor == "" {
 		return ErrNoCommonAncestor
 	}
@@ -123,6 +139,15 @@ func check(flags flags.Flags) error {
 
 	if *flags.OtherVersion == "" {
 		return ErrNoOtherVersion
+	}
+
+	if *flags.Result == "" {
+		return ErrNoResult
+	}
+
+	_, filename := path.Split(*flags.Result)
+	if filename != "go.mod" {
+		return ErrNotGoMod
 	}
 
 	return nil
