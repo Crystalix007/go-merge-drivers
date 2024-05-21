@@ -34,6 +34,7 @@ func run(cmd *cobra.Command, flags flags.Flags) error {
 		slog.String("common-ancestor", *flags.CommonAncestor),
 		slog.String("current-version", *flags.CurrentVersion),
 		slog.String("other-version", *flags.OtherVersion),
+		slog.String("result", *flags.Result),
 	)
 
 	return nil
