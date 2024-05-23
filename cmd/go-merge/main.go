@@ -205,16 +205,6 @@ func runGoSumMerge(ctx context.Context, flags flags.Flags, output io.Writer) err
 		)
 	}
 
-	resultFile, err := os.Create(*flags.Result)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to create result go.sum file: %w",
-			err,
-		)
-	}
-
-	defer resultFile.Close()
-
 	result := merged.String()
 
 	if _, err := output.Write([]byte(result)); err != nil {
