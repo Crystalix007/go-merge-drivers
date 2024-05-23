@@ -2,7 +2,7 @@ module github.com/crystalix007/go-merge-drivers
 
 go 1.22.2
 
-replace github.com/spf13/cobra => gitlab.com/spf13/cobra v1.7.0
+replace github.com/spf13/cobra => gitlab.com/spf13/cobra v1.8.0
 
 require github.com/spf13/cobra v1.7.0
 

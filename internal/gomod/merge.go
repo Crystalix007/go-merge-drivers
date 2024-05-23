@@ -40,8 +40,18 @@ func mergeChanges(currentChanges, otherChanges modfile.File) modfile.File {
 		otherChanges.AddExclude(exc.Mod.Path, exc.Mod.Version)
 	}
 
+	otherReps := make(map[string]modfile.Replace)
+
+	for _, rep := range otherChanges.Replace {
+		otherReps[rep.Old.Path] = *rep
+	}
+
 	for _, rep := range currentChanges.Replace {
-		otherChanges.AddReplace(rep.Old.Path, rep.Old.Version, rep.New.Path, rep.New.Version)
+		// Update the replace statement if the current replace is a higher
+		// version than the existing one.
+		if otherRep, ok := otherReps[rep.Old.Path]; !ok || semver.Compare(rep.New.Version, otherRep.New.Version) > 0 {
+			otherChanges.AddReplace(rep.Old.Path, rep.Old.Version, rep.New.Path, rep.New.Version)
+		}
 	}
 
 	return otherChanges

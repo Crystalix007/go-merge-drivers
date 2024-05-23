@@ -46,4 +46,10 @@ func TestMerge(t *testing.T) {
 
 	// Use version from other.go.mod, as it is a full major version greater.
 	assert.Equal(t, "v1.17.0", modRequires[0].Mod.Version)
+
+	modReplaces := findReplaces(merged, "github.com/spf13/cobra")
+	require.Len(t, modReplaces, 1)
+
+	// Use version from other.go.mod, as it has the greater version.
+	assert.Equal(t, "v1.8.0", modReplaces[0].New.Version)
 }
