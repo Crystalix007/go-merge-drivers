@@ -84,6 +84,8 @@ func run(cmd *cobra.Command, flags flags.Flags) (err error) {
 					),
 				)
 			} else {
+				defer resultFile.Close()
+
 				resultFile.Write(outputBuffer.Bytes())
 			}
 		}()
@@ -95,7 +97,7 @@ func run(cmd *cobra.Command, flags flags.Flags) (err error) {
 	case "go.mod":
 		return runGoModMerge(cmd.Context(), flags, output)
 	case "go.sum":
-		return runGoSumMerge(flags, output)
+		return runGoSumMerge(cmd.Context(), flags, output)
 	default:
 		return fmt.Errorf("%w: %s", ErrUnknownFile, filename)
 	}
@@ -103,7 +105,7 @@ func run(cmd *cobra.Command, flags flags.Flags) (err error) {
 
 // runGoModMerge will run the go.mod merge operation.
 func runGoModMerge(ctx context.Context, flags flags.Flags, output io.Writer) error {
-	slog.DebugContext(
+	slog.InfoContext(
 		ctx,
 		"running go.mod merge",
 		slog.String("common-ancestor", *flags.CommonAncestor),
@@ -161,7 +163,16 @@ func runGoModMerge(ctx context.Context, flags flags.Flags, output io.Writer) err
 }
 
 // runGoSumMerge will run the go.sum merge operation.
-func runGoSumMerge(flags flags.Flags, output io.Writer) error {
+func runGoSumMerge(ctx context.Context, flags flags.Flags, output io.Writer) error {
+	slog.InfoContext(
+		ctx,
+		"running go.sum merge",
+		slog.String("common-ancestor", *flags.CommonAncestor),
+		slog.String("current-version", *flags.CurrentVersion),
+		slog.String("other-version", *flags.OtherVersion),
+		slog.String("result", *flags.Result),
+	)
+
 	current, err := parseGoSumFile(*flags.CurrentVersion)
 	if err != nil {
 		return fmt.Errorf(
