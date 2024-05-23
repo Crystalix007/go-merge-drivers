@@ -54,9 +54,12 @@ func TestDiff_currentVsOther(t *testing.T) {
 	cobraRequires := findRequires(diff, "github.com/spf13/cobra")
 	assert.Len(t, cobraRequires, 1)
 
-	// Removed replace statement.
+	// Both add the same replace statement.
+	require.Len(t, diff.Replace, 1)
+
 	replacesCobra := slices.ContainsFunc(diff.Replace, func(r *modfile.Replace) bool {
 		return r.Old.Path == "github.com/spf13/cobra"
 	})
+
 	assert.True(t, replacesCobra)
 }
