@@ -56,20 +56,39 @@ func run(cmd *cobra.Command, flags flags.Flags) error {
 		return err
 	}
 
+	var resultFile io.WriteCloser
+
+	if *flags.Output == "/dev/stdout" {
+		resultFile = os.Stdout
+	} else {
+		var err error
+
+		resultFile, err = os.Create(*flags.Output)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to create output file (%s): %w",
+				*flags.Output,
+				err,
+			)
+		}
+	}
+
+	defer resultFile.Close()
+
 	_, filename := path.Split(*flags.Result)
 
 	switch filename {
 	case "go.mod":
-		return runGoModMerge(cmd.Context(), flags)
+		return runGoModMerge(cmd.Context(), flags, resultFile)
 	case "go.sum":
-		return runGoSumMerge(cmd.Context(), flags)
+		return runGoSumMerge(flags, resultFile)
 	default:
 		return fmt.Errorf("%w: %s", ErrUnknownFile, filename)
 	}
 }
 
 // runGoModMerge will run the go.mod merge operation.
-func runGoModMerge(ctx context.Context, flags flags.Flags) error {
+func runGoModMerge(ctx context.Context, flags flags.Flags, output io.Writer) error {
 	slog.DebugContext(
 		ctx,
 		"running go.mod merge",
@@ -116,24 +135,7 @@ func runGoModMerge(ctx context.Context, flags flags.Flags) error {
 		)
 	}
 
-	var resultFile io.WriteCloser
-
-	if *flags.Output == "/dev/stdout" {
-		resultFile = os.Stdout
-	} else {
-		resultFile, err = os.Create(*flags.Output)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to create output file (%s): %w",
-				*flags.Output,
-				err,
-			)
-		}
-	}
-
-	defer resultFile.Close()
-
-	if _, err := resultFile.Write(mergedBytes); err != nil {
+	if _, err := output.Write(mergedBytes); err != nil {
 		return fmt.Errorf(
 			"failed to write go.mod file (%s): %w",
 			*flags.Result,
@@ -145,7 +147,7 @@ func runGoModMerge(ctx context.Context, flags flags.Flags) error {
 }
 
 // runGoSumMerge will run the go.sum merge operation.
-func runGoSumMerge(ctx context.Context, flags flags.Flags) error {
+func runGoSumMerge(flags flags.Flags, output io.Writer) error {
 	current, err := parseGoSumFile(*flags.CurrentVersion)
 	if err != nil {
 		return fmt.Errorf(
@@ -190,9 +192,10 @@ func runGoSumMerge(ctx context.Context, flags flags.Flags) error {
 
 	result := merged.String()
 
-	if _, err := io.WriteString(resultFile, result); err != nil {
+	if _, err := output.Write([]byte(result)); err != nil {
 		return fmt.Errorf(
-			"failed to write result go.sum file: %w",
+			"failed to write go.sum file (%s): %w",
+			*flags.Result,
 			err,
 		)
 	}
