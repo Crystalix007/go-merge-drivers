@@ -5,7 +5,7 @@ git merge drivers [[1]] for go.mod and go.sum files.
 Allows seamless editing from multiple members of the team, bumping to the latest
 version supported automatically on merge.
 
-## To Use go.mod driver
+## To Use the Go driver
 
 Define a merge driver like this in `.git/config`:
 
