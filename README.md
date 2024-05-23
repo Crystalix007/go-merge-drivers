@@ -12,7 +12,7 @@ Define a merge driver like this in `.git/config`:
 ```gitconfig
 [merge "go"]
 	name = Go merge driver
-	driver = go run github.com/Crystalix007/go-merge-drivers/cmd/go-merge/ -O %O -A %A -B %B -P %P --output %A
+	driver = go run github.com/crystalix007/go-merge-drivers/cmd/go-merge/ -O %O -A %A -B %B -P %P --output %A
 ```
 
 Then define gitattributes that use this driver:
