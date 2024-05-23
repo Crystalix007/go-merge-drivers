@@ -1,6 +1,6 @@
 # go-merge-drivers
 
-git merge drivers [1] for go.mod and go.sum files.
+git merge drivers [[1]] for go.mod and go.sum files.
 
 Allows seamless editing from multiple members of the team, bumping to the latest
 version supported automatically on merge.
@@ -20,3 +20,5 @@ Then define gitattributes that use this driver:
 ```gitattributes
 go.mod merge=go-mod
 ```
+
+[1]: https://git-scm.com/docs/gitattributes#_defining_a_custom_merge_driver
