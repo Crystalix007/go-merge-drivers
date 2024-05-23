@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -10,12 +11,14 @@ import (
 
 	"github.com/crystalix007/go-merge-drivers/internal/flags"
 	"github.com/crystalix007/go-merge-drivers/internal/gomod"
+	"github.com/crystalix007/go-merge-drivers/internal/gosum"
 	"github.com/spf13/cobra"
 )
 
 var (
-	// ErrNotGoMod is returned when the file is not a go.mod file.
-	ErrNotGoMod = errors.New("file is not a go.mod file")
+	// ErrUnknownFile is returned when the file is not a recognised go module
+	// file.
+	ErrUnknownFile = errors.New("file is not a go module file")
 
 	// ErrNoCommonAncestor is returned when the common ancestor is not provided.
 	ErrNoCommonAncestor = errors.New("common ancestor is not provided")
@@ -53,8 +56,22 @@ func run(cmd *cobra.Command, flags flags.Flags) error {
 		return err
 	}
 
-	slog.InfoContext(
-		cmd.Context(),
+	_, filename := path.Split(*flags.Result)
+
+	switch filename {
+	case "go.mod":
+		return runGoModMerge(cmd.Context(), flags)
+	case "go.sum":
+		return runGoSumMerge(cmd.Context(), flags)
+	default:
+		return fmt.Errorf("%w: %s", ErrUnknownFile, filename)
+	}
+}
+
+// runGoModMerge will run the go.mod merge operation.
+func runGoModMerge(ctx context.Context, flags flags.Flags) error {
+	slog.DebugContext(
+		ctx,
 		"running go.mod merge",
 		slog.String("common-ancestor", *flags.CommonAncestor),
 		slog.String("current-version", *flags.CurrentVersion),
@@ -127,6 +144,85 @@ func run(cmd *cobra.Command, flags flags.Flags) error {
 	return nil
 }
 
+// runGoSumMerge will run the go.sum merge operation.
+func runGoSumMerge(ctx context.Context, flags flags.Flags) error {
+	current, err := parseGoSumFile(*flags.CurrentVersion)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to parse current go.sum file: %w",
+			err,
+		)
+	}
+
+	other, err := parseGoSumFile(*flags.OtherVersion)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to parse other go.sum file: %w",
+			err,
+		)
+	}
+
+	ancestor, err := parseGoSumFile(*flags.CommonAncestor)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to parse common ancestor go.sum file: %w",
+			err,
+		)
+	}
+
+	merged, err := gosum.Merge(current, other, ancestor)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to merge go.sum files: %w",
+			err,
+		)
+	}
+
+	resultFile, err := os.Create(*flags.Result)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to create result go.sum file: %w",
+			err,
+		)
+	}
+
+	defer resultFile.Close()
+
+	result := merged.String()
+
+	if _, err := io.WriteString(resultFile, result); err != nil {
+		return fmt.Errorf(
+			"failed to write result go.sum file: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func parseGoSumFile(path string) (gosum.GoSum, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to open go.sum file (%s): %w",
+			path,
+			err,
+		)
+	}
+
+	defer file.Close()
+
+	goSum, err := gosum.NewGoSum(file)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to parse go.sum file: %w",
+			err,
+		)
+	}
+
+	return goSum, nil
+}
+
 // check will verify the provided flags.
 func check(flags flags.Flags) error {
 	if *flags.CommonAncestor == "" {
@@ -143,11 +239,6 @@ func check(flags flags.Flags) error {
 
 	if *flags.Result == "" {
 		return ErrNoResult
-	}
-
-	_, filename := path.Split(*flags.Result)
-	if filename != "go.mod" {
-		return ErrNotGoMod
 	}
 
 	return nil

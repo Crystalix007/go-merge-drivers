@@ -1,3 +1,3 @@
-[merge "go-mod"]
-	name = Go mod merge driver
-	driver = go run github.com/Crystalix007/go-merge-drivers/cmd/go-mod-merge -O %O -A %A -B %B -P %P --output %A
+[merge "go"]
+	name = Go merge driver
+	driver = go run github.com/Crystalix007/go-merge-drivers/cmd/go-merge -O %O -A %A -B %B -P %P --output %A

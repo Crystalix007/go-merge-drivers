@@ -10,15 +10,16 @@ version supported automatically on merge.
 Define a merge driver like this in `.git/config`:
 
 ```gitconfig
-[merge "go-mod"]
-	name = Go mod merge driver
-	driver = go run github.com/Crystalix007/go-merge-drivers/cmd/go-mod-merge/ -O %O -A %A -B %B -P %P --output %A
+[merge "go"]
+	name = Go merge driver
+	driver = go run github.com/Crystalix007/go-merge-drivers/cmd/go-merge/ -O %O -A %A -B %B -P %P --output %A
 ```
 
 Then define gitattributes that use this driver:
 
 ```gitattributes
-go.mod merge=go-mod
+go.mod merge=go
+go.sum merge=go
 ```
 
 [1]: https://git-scm.com/docs/gitattributes#_defining_a_custom_merge_driver

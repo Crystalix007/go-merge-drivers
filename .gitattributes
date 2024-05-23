@@ -1,1 +1,2 @@
-testing/go.mod merge=go-mod
+go.mod merge=go
+go.sum merge=go
