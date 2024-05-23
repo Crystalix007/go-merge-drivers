@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -51,37 +52,50 @@ func main() {
 	}
 }
 
-func run(cmd *cobra.Command, flags flags.Flags) error {
+func run(cmd *cobra.Command, flags flags.Flags) (err error) {
 	if err := check(flags); err != nil {
 		return err
 	}
 
-	var resultFile io.WriteCloser
+	var output io.Writer
 
 	if *flags.Output == "/dev/stdout" {
-		resultFile = os.Stdout
+		output = os.Stdout
 	} else {
-		var err error
+		var outputBuffer bytes.Buffer
 
-		resultFile, err = os.Create(*flags.Output)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to create output file (%s): %w",
-				*flags.Output,
-				err,
+		output = &outputBuffer
+
+		// Defer creating the file until we've finished processing, to avoid
+		// overwriting files necessary to run the command.
+		defer func() {
+			var (
+				outputErr  error
+				resultFile *os.File
 			)
-		}
-	}
 
-	defer resultFile.Close()
+			resultFile, outputErr = os.Create(*flags.Output)
+			if err != nil {
+				err = errors.Join(err,
+					fmt.Errorf(
+						"failed to create output file (%s): %w",
+						*flags.Output,
+						outputErr,
+					),
+				)
+			} else {
+				resultFile.Write(outputBuffer.Bytes())
+			}
+		}()
+	}
 
 	_, filename := path.Split(*flags.Result)
 
 	switch filename {
 	case "go.mod":
-		return runGoModMerge(cmd.Context(), flags, resultFile)
+		return runGoModMerge(cmd.Context(), flags, output)
 	case "go.sum":
-		return runGoSumMerge(flags, resultFile)
+		return runGoSumMerge(flags, output)
 	default:
 		return fmt.Errorf("%w: %s", ErrUnknownFile, filename)
 	}
