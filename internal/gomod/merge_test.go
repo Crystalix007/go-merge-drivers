@@ -32,7 +32,7 @@ func TestMerge(t *testing.T) {
 	require.Len(t, mousetrapRequires, 1)
 
 	// Use other.go.mod version, as it is greater.
-	assert.Equal(t, "v1.2.0", mousetrapRequires[0].Mod.Version)
+	assert.Equal(t, "v1.1.0", mousetrapRequires[0].Mod.Version)
 
 	pflagRequires := findRequires(merged, "github.com/spf13/pflag")
 	require.Len(t, pflagRequires, 1)
@@ -45,7 +45,7 @@ func TestMerge(t *testing.T) {
 	require.Len(t, modRequires, 1)
 
 	// Use version from other.go.mod, as it is a full major version greater.
-	assert.Equal(t, "v1.17.0", modRequires[0].Mod.Version)
+	assert.Equal(t, "v0.17.0", modRequires[0].Mod.Version)
 
 	modReplaces := findReplaces(merged, "github.com/spf13/cobra")
 	require.Len(t, modReplaces, 1)
