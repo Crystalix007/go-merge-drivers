@@ -141,8 +141,6 @@ func runGoModMerge(ctx context.Context, flags flags.Flags, output io.Writer) err
 	// Merge the go.mod file changes.
 	merged := gomod.Merge(*currentVersion, *otherVersion, *commonAncestor)
 
-	merged.Cleanup()
-
 	mergedBytes, err := merged.Format()
 	if err != nil {
 		return fmt.Errorf(

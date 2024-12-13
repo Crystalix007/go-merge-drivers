@@ -28,13 +28,24 @@ func mergeChanges(currentChanges, otherChanges modfile.File) modfile.File {
 
 	for _, req := range currentChanges.Require {
 		otherReq, ok := otherReqs[req.Mod.Path]
-
-		// If the other require statement doesn't exist, or the current
-		// require is a higher version, then skip.
-		if !ok || semver.Compare(req.Mod.Version, otherReq.Mod.Version) > 0 {
-			otherChanges.AddRequire(req.Mod.Path, req.Mod.Version)
+		if !ok {
+			continue
 		}
+
+		// If the other require statement is a higher version, then update the
+		// current require statement.
+		if semver.Compare(req.Mod.Version, otherReq.Mod.Version) < 0 {
+			req.Mod.Version = otherReq.Mod.Version
+		}
+
+		if !otherReq.Indirect {
+			req.Indirect = false
+		}
+
+		req.Syntax.InBlock = false
 	}
+
+	otherChanges.SetRequireSeparateIndirect(currentChanges.Require)
 
 	for _, exc := range currentChanges.Exclude {
 		otherChanges.AddExclude(exc.Mod.Path, exc.Mod.Version)
@@ -53,6 +64,8 @@ func mergeChanges(currentChanges, otherChanges modfile.File) modfile.File {
 			otherChanges.AddReplace(rep.Old.Path, rep.Old.Version, rep.New.Path, rep.New.Version)
 		}
 	}
+
+	otherChanges.Cleanup()
 
 	return otherChanges
 }

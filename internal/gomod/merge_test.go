@@ -1,6 +1,7 @@
 package gomod_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/crystalix007/go-merge-drivers/internal/gomod"
@@ -52,4 +53,13 @@ func TestMerge(t *testing.T) {
 
 	// Use version from other.go.mod, as it has the greater version.
 	assert.Equal(t, "v1.8.0", modReplaces[0].New.Version)
+
+	// Expect it to equal the expected go.mod file.
+	actual, err := merged.Format()
+	require.NoError(t, err)
+
+	expected, err := os.ReadFile("testdata/expected.go.mod")
+	require.NoError(t, err)
+
+	assert.Equal(t, string(expected), string(actual))
 }
