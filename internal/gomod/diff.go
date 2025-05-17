@@ -5,7 +5,21 @@ import "golang.org/x/mod/modfile"
 // Diff compares two modfile.File structs and returns the changes between them.
 // It checks for differences in the require, exclude, and replace statements.
 func Diff(version modfile.File, ancestor modfile.File) modfile.File {
-	changes := ancestor
+	ancestorStr, err := ancestor.Format()
+	if err != nil {
+		panic(err)
+	}
+
+	changes, err := modfile.Parse(
+		ancestor.Syntax.Name,
+		[]byte(ancestorStr),
+		nil,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// Clear the require, exclude, and replace statements.
 	changes.Exclude = []*modfile.Exclude{}
 	changes.Replace = []*modfile.Replace{}
 	changes.Require = []*modfile.Require{}
@@ -51,5 +65,5 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 		}
 	}
 
-	return changes
+	return *changes
 }
