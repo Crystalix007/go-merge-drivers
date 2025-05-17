@@ -32,10 +32,11 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 		changes.Go = version.Go
 	}
 
-	// Clear the require, exclude, and replace statements.
+	// Clear the require, exclude, replace and tool statements.
 	changes.Exclude = []*modfile.Exclude{}
 	changes.Replace = []*modfile.Replace{}
 	changes.Require = []*modfile.Require{}
+	changes.Tool = []*modfile.Tool{}
 
 	// Avoid quadratic behavior by creating a map of the ancestor require
 	// statements.
@@ -65,16 +66,31 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 		}
 	}
 
+	// Compute the existing ancestor replace statements.
 	ancestorReps := make(map[string]modfile.Replace)
 
 	for _, rep := range ancestor.Replace {
 		ancestorReps[rep.Old.Path] = *rep
 	}
 
-	// Add the replace statements.
+	// Add the modified replace statements.
 	for _, rep := range version.Replace {
 		if ancestorRep, ok := ancestorReps[rep.Old.Path]; !ok || *rep != ancestorRep {
 			changes.Replace = append(changes.Replace, rep)
+		}
+	}
+
+	// Compute the existing ancestor tool statements.
+	ancestorTools := make(map[string]modfile.Tool)
+
+	for _, tool := range ancestor.Tool {
+		ancestorTools[tool.Path] = *tool
+	}
+
+	// Add the tool statements.
+	for _, tool := range version.Tool {
+		if ancestorTool, ok := ancestorTools[tool.Path]; !ok || *tool != ancestorTool {
+			changes.Tool = append(changes.Tool, tool)
 		}
 	}
 

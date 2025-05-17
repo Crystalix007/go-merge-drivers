@@ -67,6 +67,22 @@ func mergeChanges(currentChanges, otherChanges modfile.File) modfile.File {
 		}
 	}
 
+	// Compute the existing tool statements.
+	otherTools := make(map[string]struct{})
+
+	for _, tool := range otherChanges.Tool {
+		otherTools[tool.Path] = struct{}{}
+	}
+
+	// Only add non-duplicate tool statements.
+	for _, tool := range currentChanges.Tool {
+		// Update the tool statement if the current tool is a higher version
+		// than the existing one.
+		if _, ok := otherTools[tool.Path]; !ok {
+			otherChanges.AddTool(tool.Path)
+		}
+	}
+
 	goVersions := make([]string, 0, 2)
 
 	if currentChanges.Go != nil && currentChanges.Go.Version != "" {
