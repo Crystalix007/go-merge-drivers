@@ -1,6 +1,6 @@
 module github.com/crystalix007/go-merge-drivers
 
-go 1.22.2
+go 1.24.0
 
 require github.com/spf13/cobra v1.8.0
 
@@ -15,5 +15,5 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
-	golang.org/x/mod v0.17.0
+	golang.org/x/mod v0.24.0
 )
