@@ -1,6 +1,9 @@
 package gomod
 
-import "golang.org/x/mod/modfile"
+import (
+	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/semver"
+)
 
 // Diff compares two modfile.File structs and returns the changes between them.
 // It checks for differences in the require, exclude, and replace statements.
@@ -17,6 +20,16 @@ func Diff(version modfile.File, ancestor modfile.File) modfile.File {
 	)
 	if err != nil {
 		panic(err)
+	}
+
+	semverVersionGoVersion := "v" + version.Go.Version
+	semverAncestorGoVersion := "v" + ancestor.Go.Version
+
+	semverComparison := semver.Compare(semverVersionGoVersion, semverAncestorGoVersion)
+
+	// If the new version uses a later Go version, then update the Go version.
+	if semverComparison > 0 {
+		changes.Go = version.Go
 	}
 
 	// Clear the require, exclude, and replace statements.

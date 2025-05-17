@@ -34,6 +34,9 @@ func TestDiff_currentVsAncestor(t *testing.T) {
 
 	diff := gomod.Diff(*current, *ancestor)
 
+	// Check the diff Go version.
+	assert.Equal(t, "1.24.0", diff.Go.Version)
+
 	// New require statement.
 	cobraRequires := findRequires(diff, "github.com/spf13/cobra")
 	require.Len(t, cobraRequires, 1)

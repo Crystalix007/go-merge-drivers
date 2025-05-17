@@ -23,6 +23,9 @@ func TestMerge(t *testing.T) {
 
 	merged := gomod.Merge(*current, *other, *ancestor)
 
+	// Check the merged go.mod file Go version.
+	assert.Equal(t, "1.24.0", merged.Go.Version)
+
 	cobraRequires := findRequires(merged, "github.com/spf13/cobra")
 	require.Len(t, cobraRequires, 1)
 

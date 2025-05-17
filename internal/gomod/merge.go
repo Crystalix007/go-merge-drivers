@@ -1,6 +1,8 @@
 package gomod
 
 import (
+	"strings"
+
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/semver"
 )
@@ -64,6 +66,22 @@ func mergeChanges(currentChanges, otherChanges modfile.File) modfile.File {
 			otherChanges.AddReplace(rep.Old.Path, rep.Old.Version, rep.New.Path, rep.New.Version)
 		}
 	}
+
+	goVersions := make([]string, 0, 2)
+
+	if currentChanges.Go != nil && currentChanges.Go.Version != "" {
+		goVersions = append(goVersions, "v"+currentChanges.Go.Version)
+	}
+
+	if otherChanges.Go != nil && otherChanges.Go.Version != "" {
+		goVersions = append(goVersions, "v"+otherChanges.Go.Version)
+	}
+
+	semver.Sort(goVersions)
+
+	// Pick the highest version of Go required.
+	maxGoVersion := strings.TrimPrefix(goVersions[len(goVersions)-1], "v")
+	otherChanges.AddGoStmt(maxGoVersion)
 
 	otherChanges.Cleanup()
 
